@@ -1,8 +1,8 @@
 <?php
 /**
- * @copyright Copyright (c) 2018 Marius Blüm <marius@nextcloud.com>
+ * @copyright Copyright (c) 2019 Guillaume COMPAGNON <gcompagnon@outlook.com>
  *
- * @author Marius Blüm <marius@nextcloud.com>
+ * @author Guillaume COMPAGNON <gcompagnon@outlook.com>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -21,14 +21,14 @@
  *
  */
 
-namespace OCA\SagisEmailTemplate\Migration;
+namespace OCA\CustomizedEmails\Migration;
 
-use OCA\SagisEmailTemplate\EMailTemplateSagis;
+use OCA\CustomizedEmails\CustomizedEmails;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 
-class UnsetEmailTemplate implements IRepairStep {
+class SetCustomizedEmails implements IRepairStep {
 	/** @var IConfig */
 	protected $config;
 
@@ -37,12 +37,10 @@ class UnsetEmailTemplate implements IRepairStep {
 	}
 
 	public function getName() {
-		return 'Reset the email template to default';
+		return 'Set the customized emails app';
 	}
 
 	public function run(IOutput $output) {
-		if ($this->config->getSystemValue('mail_template_class') === EMailTemplateSagis::class) {
-			$this->config->deleteSystemValue('mail_template_class');
-		}
+		$this->config->setSystemValue('mail_template_class', CustomizedEmails::class);
 	}
 }

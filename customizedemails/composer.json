@@ -1,0 +1,15 @@
+{
+    "name": "Customized Emails",
+    "description": "add HTML templates for theming the NextCloud Mail messages",
+    "type": "project",
+    "license": "AGPL",
+    "authors": [
+        {
+            "name": "Guillaume Compagnon"
+        }
+    ],
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^5.4"
+    }
+}

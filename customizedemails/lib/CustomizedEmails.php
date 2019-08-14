@@ -2,6 +2,7 @@
 declare(strict_types=1);
 /**
  *
+ * @author Guillaume COMPAGNON <gcompagnon@outlook.com>
  * @copyright Copyright (c) 2019, Guillaume COMPAGNON <gcompagnon@outlook.com>
  *
  * @license GNU AGPL version 3 or any later version
@@ -19,9 +20,11 @@ declare(strict_types=1);
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
+ *
+ * https://nextcloudappstore.readthedocs.io/en/latest/developer.html
  */
 
-namespace OCA\SagisEmailTemplate;
+namespace OCA\CustomizedEmails;
 
 use OCP\Defaults;
 use OCP\IL10N;
@@ -30,19 +33,22 @@ use OCP\Mail\IEMailTemplate;
 use OC\Mail\EMailTemplate;
 
 /**
- * Class EMailTemplateSagis
+ * Class CustomizedEmails
  *
  * Generate customized HTML for serveral EmailId values, if EmailId is not part of the value, delegate to the normal EmailTemplate
  *
  * @package OCA\SagisEmailTemplate
  */
-class EMailTemplateSagis implements IEMailTemplate {
+class CustomizedEmails implements IEMailTemplate {
+
+protected static $staticTest;
+protected static $_enums;
 
 /** @var array */
-protected static $bodyConfigs = null;
+protected static $bodyConfigs;
 
 /** @var EmailTemplate */
-protected static $delegate = null;
+protected $delegate = null;
 
 /** @var string */
 protected $subject = '';
@@ -134,14 +140,47 @@ EOF;
 	/**
 	 * Static initializer
 	*/
-	protected static function __static() {
-		if(isset($bodyConfigs)) {
-			return;
+	protected static function __init(IURLGenerator $urlGenerator) {
+		// Read the selected theme from the config file
+		$theme = \OC_Util::getTheme();
+
+		$appPath = \OC_App::getAppPath('customizedemails');
+
+
+		// for the HTML file path : if a theme is enabled
+		$filePath = 'custom_apps/customizedemails/html/Welcome.html';
+		
+		
+		// For the image paths	, build the URI	
+		$imagePath = $urlGenerator->imagePath('customizedemails',$image);
+
+		// or 
+		$themingEnabled = $urlGenerator->config->getSystemValue('installed', false) && \OCP\App::isEnabled('theming') && \OC_App::isAppLoaded('theming');
+		$themingImagePath = false;
+		if($themingEnabled) {
+			$themingDefaults = \OC::$server->getThemingDefaults();
+			if ($themingDefaults instanceof ThemingDefaults) {
+				$themingImagePath = $themingDefaults->replaceImagePath('customizedemails', $imagePath);
+			}
 		}
-		$bodyConfigs["core.NewPassword"] = $bodyNewPassword;
-		$bodyConfigs["core.ResetPassword"] = $bodyNewPassword;
-		$bodyConfigs["core.test"] = "exemple";
+
+
+		$file = file_get_contents('themes/sagis/core/people.txt', true);
+		$file = file_get_contents('custom_apps/sagis_email_template/html/Welcome.html', true);
+		$file = file_get_contents('themes/sagis/apps/sagis_email_template/html/Welcome.html', true);
+		CustomizedEmails::$bodyConfigs = [
+			"core.NewPassword" => CustomizedEmails::$bodyNewPassword,
+			"core.ResetPassword" => CustomizedEmails::$bodyNewPassword,
+			"core.test" => "exemple",
+		];
+		CustomizedEmails::$_enums = [
+			1 => "Apple",
+			2 => "Orange",
+			3 => "Banana",
+		];
+		CustomizedEmails::$staticTest = "TEST";
 	}
+	
 	
 	/**
 	 * @param Defaults $themingDefaults
@@ -155,14 +194,25 @@ EOF;
 								IL10N $l10n,
 								$emailId,
 								array $data) {
-		EMailTemplateSagis::__static();
+		CustomizedEmails::__init($urlGenerator);
 		$this->themingDefaults = $themingDefaults;
 		$this->urlGenerator = $urlGenerator;
 		$this->l10n = $l10n;
 		$this->emailId = $emailId;
 		$this->data = $data;
+
+		$bodyConfigs2 = [
+			"core.NewPassword" => CustomizedEmails::$bodyNewPassword,
+			"core.ResetPassword" => CustomizedEmails::$bodyNewPassword,
+			"core.test" => "exemple",
+		];
+
+		$body =  CustomizedEmails::$bodyConfigs;
+
+		$this->emailId = CustomizedEmails::$_enums;
+
 // debug: $bodyConfigs null : not initialized
-		if(!array_key_exists($emailId,$bodyConfigs)) {
+		if(!array_key_exists($emailId,$body)) {
 			$this->delegate = new EMailTemplate(
 				$themingDefaults,
 				$urlGenerator,
