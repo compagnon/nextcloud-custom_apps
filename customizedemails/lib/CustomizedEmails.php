@@ -41,146 +41,79 @@ use OC\Mail\EMailTemplate;
  */
 class CustomizedEmails implements IEMailTemplate {
 
-protected static $staticTest;
-protected static $_enums;
-
-/** @var array */
-protected static $bodyConfigs;
-
-/** @var EmailTemplate */
-protected $delegate = null;
-
-/** @var string */
-protected $subject = '';
-
-// email de 1ere connexion  
-/** @var string */
-protected static $bodyNewPassword = <<<EOF
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
-	<head>
-		<meta charset="utf-8" />		
-		<link href="%s" rel="stylesheet" type="text/css" />
-	</head>
-	<body id="x190513_COFFRE-FORT_Email" lang="fr-FR">
-		<div class="_idGenObjectLayout-1">
-			<div id="_idContainer020">
-				<div id="_idContainer004">
-					<div id="_idContainer002">
-						<div id="_idContainer000" class="Bloc-graphique-standard _idGenObjectStyleOverride-1">
-						</div>
-						<div id="_idContainer001">
-							<img class="_idGenObjectAttribute-1" src="%s" alt="" />
-						</div>
-					</div>
-					<div id="_idContainer003" class="_idGenObjectStyleOverride-2">
-						<p><span class="CharOverride-1">première</span></p>
-						<p><span class="CharOverride-2">connexion</span></p>
-					</div>
-				</div>
-				<div id="_idContainer008">
-					<div id="_idContainer005" class="_idGenObjectStyleOverride-2">
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-3">Société en nom collectif au capital de 3 781 501 € </span><span class="CharOverride-3">•</span><span class="CharOverride-3"> RCS Paris B 508 305 927 </span><span class="CharOverride-3">•</span><span class="CharOverride-3"> </span><span class="CharOverride-3">TVA intracommunautaire FR96508305927 </span><span class="CharOverride-3">•</span><span class="CharOverride-3"> Code NAF 7022 Z.</span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-3">Société de Gestion </span><span class="CharOverride-3">de Portefeuille agréée par l’AMF sous le n° GP 13000024 du 4 juillet 2013 - www.amf-france.org.</span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-3">Société de courtage d’assurance enregistrée à l’ORIAS sous le n° 13007902  - www.orias.fr.</span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-3">Assurance et Garantie Financière RCP n° 114 231 684 auprès de Covea Risk (MMA-19-21 allée de l’Europe 92110 Clichy).</span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-3">Dans le cadre du Règlement Général sur la Protection des Données (RGPD), si vous ne souhaitez plus posséder de coffre-fort </span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-3">ou recevoir d’emails de notification, vous pouvez vous désabonner par l’écriture d’un email à</span><span class="CharOverride-4"> </span><span class="Hyperlien CharOverride-3">rgpd</span><a href=""><span class="Hyperlien CharOverride-3">@sagis-am.com</span></a><span class="CharOverride-4">. </span></p>
-					</div>
-					<div id="_idContainer006" class="Bloc-de-texte-standard">
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-3">72 avenue Victor Hugo</span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-3">75116 Paris </span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-3">T 01 76 62 26 20</span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-3">F 01 40 67 10 55</span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="Hyperlien CharOverride-3">contact</span><a href="mailto:contact%40sagis-am.com?subject="><span class="Hyperlien CharOverride-3">@sagis-am.com</span></a></p>
-						<p class="Paragraphe-standard ParaOverride-1"><a href="https://www.sagis-am.com/"><span class="Hyperlien CharOverride-3">www.sagis-am.com</span></a></p>
-					</div>
-					<div id="_idContainer007">
-						<img class="_idGenObjectAttribute-1" src="%s" alt="" />
-					</div>
-				</div>
-				<div id="_idContainer013">
-					<div id="_idContainer009" class="_idGenObjectStyleOverride-2">
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-5">Bonjour, </span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-5"> Vous pouvez activer </span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-5">votre mot de passe coffre, et </span><a href=""><span class="Hyperlien CharOverride-5">cliquez ici</span></a><span class="CharOverride-6">.  </span></p>
-					</div>
-					<div id="_idContainer012">
-						<div id="_idContainer010" class="Bloc-de-texte-standard _idGenObjectStyleOverride-3">
-							<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-7">Créez votre </span></p>
-							<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-7">coffre </span><span class="CharOverride-8">ici</span></p>
-						</div>
-						<div id="_idContainer011">
-							<img class="_idGenObjectAttribute-1" src="%s" alt="" />
-						</div>
-					</div>
-				</div>
-				<div id="_idContainer019">
-					<a href="mailto:support-coffre%40sagis-am.com?subject=SAGIS_COFFRE-FORT_SUPPORT%20TECHNIQUE">
-						<div id="_idContainer014">
-							<img class="_idGenObjectAttribute-1" src="%s" alt="" />
-						</div>
-					</a>
-					<div id="_idContainer017">
-						<div id="_idContainer015" class="Bloc-graphique-standard _idGenObjectStyleOverride-4">
-						</div>
-						<div id="_idContainer016" class="Bloc-graphique-standard _idGenObjectStyleOverride-5">
-						</div>
-					</div>
-					<div id="_idContainer018" class="Bloc-de-texte-standard">
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-9">En cas de besoin, contactez votre </span><a href="mailto:contact%40sagis-am.com%0D?subject=SAGIS_COFFRE"><span class="Hyperlien CharOverride-9">gérant privé</span></a><span class="CharOverride-9"> ou notre</span></p>
-						<p class="Paragraphe-standard ParaOverride-1"><span class="CharOverride-9">équipe de</span><span class="CharOverride-10"> </span><span class="Hyperlien CharOverride-9">support</span><a href="mailto:coffre%40sagis-am.com%0D?subject=SAGIS_COFFRE"><span class="Hyperlien CharOverride-9"> technique</span></a><span class="CharOverride-9">. </span></p>
-					</div>
-				</div>
-			</div>
-		</div>
-	</body>
-</html>
-EOF;
 	/**
-	 * Static initializer
-	*/
-	protected static function __init(IURLGenerator $urlGenerator) {
+ 	* Set of found HTML contents found by $emailId
+	 *  @var array
+	 */
+	protected static $HTMLEMAILS = array();
+
+	/** @var EmailTemplate */
+	protected $delegate = null;
+
+	/** @var Defaults */
+	protected $themingDefaults;
+	/** @var IURLGenerator */
+	protected $urlGenerator;
+	/** @var IL10N */
+	protected $l10n;
+	/** @var string */
+	protected $emailId;
+	/** @var array */
+	protected $data;
+
+	/** @var string */
+	protected $subject = '';
+	/** @var string */
+	protected $htmlBody = '';
+	/** @var string */
+	protected $plainBody = '';
+	/** @var bool indicated if the footer is added */
+	protected $headerAdded = false;
+	/** @var bool indicated if the body is already opened */
+	protected $bodyOpened = false;
+	/** @var bool indicated if there is a list open in the body */
+	protected $bodyListOpened = false;
+	/** @var bool indicated if the footer is added */
+	protected $footerAdded = false;	
+	/** @var string */
+	protected $emailContent = null;
+
+	/**
+ 	* get all the html files content from the $dir path, and add to the $HTMLEMAILS array
+ 	*/
+	protected static function scanHTMLPath($dir) {
+		if (is_dir($dir)) {
+			$files = scandir($dir);
+			if ($files !== false) {
+				foreach ($files as $file) {
+					if (substr($file, -5) === '.html' && is_null($HTMLEMAILS[substr($file, 0, -5)])) {
+						$content = file_get_contents($dir . $file, false);
+						if( $content !== false )
+							self::$HTMLEMAILS[substr($file, 0, -5)] = $content;
+					}
+				}
+			}
+		}
+	}
+
+
+	/**
+	 * Static initializer for getting the html content from all the files available , by priority in:
+	 *  themes directory and then
+	 *  customizedemails Email template default file
+	 *  
+	 * init the html bodys for all known emailId , in 
+	 */
+	public static function init() {
 		// Read the selected theme from the config file
 		$theme = \OC_Util::getTheme();
 
-		$appPath = \OC_App::getAppPath('customizedemails');
+		// Priority 1: emails html template coming from the Themes
+		CustomizedEmails::scanHTMLPath(\OC::$SERVERROOT . '/themes/' . $theme . '/apps/customizedemails/html/');
 
-
-		// for the HTML file path : if a theme is enabled
-		$filePath = 'custom_apps/customizedemails/html/Welcome.html';
-		
-		
-		// For the image paths	, build the URI	
-		$imagePath = $urlGenerator->imagePath('customizedemails',$image);
-
-		// or 
-		$themingEnabled = $urlGenerator->config->getSystemValue('installed', false) && \OCP\App::isEnabled('theming') && \OC_App::isAppLoaded('theming');
-		$themingImagePath = false;
-		if($themingEnabled) {
-			$themingDefaults = \OC::$server->getThemingDefaults();
-			if ($themingDefaults instanceof ThemingDefaults) {
-				$themingImagePath = $themingDefaults->replaceImagePath('customizedemails', $imagePath);
-			}
-		}
-
-
-		$file = file_get_contents('themes/sagis/core/people.txt', true);
-		$file = file_get_contents('custom_apps/sagis_email_template/html/Welcome.html', true);
-		$file = file_get_contents('themes/sagis/apps/sagis_email_template/html/Welcome.html', true);
-		CustomizedEmails::$bodyConfigs = [
-			"core.NewPassword" => CustomizedEmails::$bodyNewPassword,
-			"core.ResetPassword" => CustomizedEmails::$bodyNewPassword,
-			"core.test" => "exemple",
-		];
-		CustomizedEmails::$_enums = [
-			1 => "Apple",
-			2 => "Orange",
-			3 => "Banana",
-		];
-		CustomizedEmails::$staticTest = "TEST";
+		// Priority 2: emails html template coming from the Apps path
+		CustomizedEmails::scanHTMLPath(\OC_App::getAppPath('customizedemails') . '/html/');
 	}
-	
 	
 	/**
 	 * @param Defaults $themingDefaults
@@ -194,25 +127,17 @@ EOF;
 								IL10N $l10n,
 								$emailId,
 								array $data) {
-		CustomizedEmails::__init($urlGenerator);
+
 		$this->themingDefaults = $themingDefaults;
 		$this->urlGenerator = $urlGenerator;
 		$this->l10n = $l10n;
 		$this->emailId = $emailId;
 		$this->data = $data;
 
-		$bodyConfigs2 = [
-			"core.NewPassword" => CustomizedEmails::$bodyNewPassword,
-			"core.ResetPassword" => CustomizedEmails::$bodyNewPassword,
-			"core.test" => "exemple",
-		];
-
-		$body =  CustomizedEmails::$bodyConfigs;
-
-		$this->emailId = CustomizedEmails::$_enums;
-
-// debug: $bodyConfigs null : not initialized
-		if(!array_key_exists($emailId,$body)) {
+		if(array_key_exists($emailId,self::$HTMLEMAILS)) {
+			$this->emailContent = self::$HTMLEMAILS[$emailId];
+		}
+		else {
 			$this->delegate = new EMailTemplate(
 				$themingDefaults,
 				$urlGenerator,
@@ -223,13 +148,9 @@ EOF;
 		}
 	}
 
-	private function buildHtmlBody(): string {
-
-	}
-
 	public function setSubject(string $subject) {
-		if(isset($delegate)) {
-			return( $delegate.setSubject($subject));
+		if(isset($this->delegate)) {
+			return( $this->delegate->setSubject($subject));
 		}
 		$this->subject = $subject;
 	}
@@ -240,8 +161,8 @@ EOF;
 	 * @since 12.0.0
 	 */
 	public function addHeader() {
-		if(isset($delegate)) {
-			return( $delegate.addHeader());
+		if(isset($this->delegate)) {
+			return( $this->delegate->addHeader());
 		}
 	}
 
@@ -255,8 +176,8 @@ EOF;
 	 * @since 12.0.0
 	 */
 	public function addHeading(string $title, $plainTitle = '') {
-		if(isset($delegate)) {
-			return( $delegate.addHeading($title, $plainTitle));
+		if(isset($this->delegate)) {
+			return( $this->delegate->addHeading($title, $plainTitle));
 		}
 		if ($plainTitle === '') {
 			$plainTitle = $title;
@@ -277,8 +198,8 @@ EOF;
 	 * @since 12.0.0
 	 */
 	public function addBodyText(string $text, $plainText = '') {
-		if(isset($delegate)) {
-			return( $delegate.addBodyText($text, $plainText));
+		if(isset($this->delegate)) {
+			return( $this->delegate->addBodyText($text, $plainText));
 		}
 		if ($plainText === '') {
 			$plainText = $text;
@@ -303,8 +224,8 @@ EOF;
 	 * @since 12.0.0
 	 */
 	public function addBodyListItem(string $text, string $metaInfo = '', string $icon = '', $plainText = '', $plainMetaInfo = '') {
-		if(isset($delegate)) {
-			return( $delegate.addBodyListItem($text, $metaInfo, $icon, $plainText, $plainMetaInfo));
+		if(isset($this->delegate)) {
+			return( $this->delegate->addBodyListItem($text, $metaInfo, $icon, $plainText, $plainMetaInfo));
 		}
 	}
 
@@ -321,8 +242,8 @@ EOF;
 	 * @since 12.0.0
 	 */
 	public function addBodyButtonGroup(string $textLeft, string $urlLeft, string $textRight, string $urlRight, string $plainTextLeft = '', string $plainTextRight = '') {
-		if(isset($delegate)) {
-			return( $delegate.addBodyButtonGroup($textLeft, $urlLeft, $textRight, $urlRight, $plainTextLeft, $plainTextRight));
+		if(isset($this->delegate)) {
+			return( $this->delegate->addBodyButtonGroup($textLeft, $urlLeft, $textRight, $urlRight, $plainTextLeft, $plainTextRight));
 		}
 	}
 	
@@ -338,8 +259,8 @@ EOF;
 	 * @since 12.0.0
 	 */	
 	public function addBodyButton(string $text, string $url, $plainText = '') {
-		if(isset($delegate)) {
-			return( $delegate.addBodyButton($text, $url, $plainText));
+		if(isset($this->delegate)) {
+			return( $this->delegate->addBodyButton($text, $url, $plainText));
 		}
 
 		$urlCSS = $this->urlGenerator->getAbsoluteURL("/sagis/css/idGeneratedStyles.css");
@@ -380,8 +301,8 @@ EOF;
 	 * @since 12.0.0
 	 */
 	public function addFooter(string $text = '') {
-		if(isset($delegate)) {
-			return( $delegate.addFooter($text));
+		if(isset($this->delegate)) {
+			return( $this->delegate->addFooter($text));
 		}
 	}
 
@@ -393,8 +314,8 @@ EOF;
 	 * @since 13.0.0
 	 */
 	public function renderSubject(): string {
-		if(isset($delegate)) {
-			return( $delegate.renderSubject());
+		if(isset($this->delegate)) {
+			return( $this->delegate->renderSubject());
 		}
 
 		return $this->subject;
@@ -408,10 +329,10 @@ EOF;
 	 * @since 12.0.0
 	 */
 	public function renderHtml(): string {
-		if(isset($delegate)) {
-			return( $delegate.renderHtml());
+		if(isset($this->delegate)) {
+			return( $this->delegate->renderHtml());
 		}
-		return $this->htmlBody;
+		return $this->emailContent;
 	}
 
 	/**
@@ -422,9 +343,12 @@ EOF;
 	 * @since 12.0.0
 	 */
 	public function renderText(): string {
-		if(isset($delegate)) {
-			return( $delegate.renderText());
+		if(isset($this->delegate)) {
+			return( $this->delegate->renderText());
 		}
 		return $this->plainBody;
 	}
+	
 }
+
+CustomizedEmails::init();
