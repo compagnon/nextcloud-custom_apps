@@ -86,7 +86,7 @@ class CustomizedEmails implements IEMailTemplate {
 			$files = scandir($dir);
 			if ($files !== false) {
 				foreach ($files as $file) {
-					if (substr($file, -5) === '.html' && is_null($HTMLEMAILS[substr($file, 0, -5)])) {
+					if (substr($file, -5) === '.html' && is_null(self::$HTMLEMAILS[substr($file, 0, -5)])) {
 						$content = file_get_contents($dir . $file, false);
 						if( $content !== false )
 							self::$HTMLEMAILS[substr($file, 0, -5)] = $content;
@@ -96,6 +96,23 @@ class CustomizedEmails implements IEMailTemplate {
 		}
 	}
 
+	/**
+ 	* get the html files content from the $dir path, and add to the $HTMLEMAILS array
+ 	*/
+	 protected static function getHTMLFile($dir,$emailId) {
+		$content = null;
+		if ( is_null(self::$HTMLEMAILS[$emailId]) ) {
+			if (is_dir($dir) && is_readable($dir . $emailId . '.html')) {
+						$content = file_get_contents($dir . $emailId . '.html', false);
+						if( $content != null ) {
+							self::$HTMLEMAILS[$emailId] = $content;
+						} else if( $content == "" ) {
+							$content = "EMPTY";
+						}
+			}
+		}
+		return $content;
+	}
 
 	/**
 	 * Static initializer for getting the html content from all the files available , by priority in:
@@ -105,22 +122,28 @@ class CustomizedEmails implements IEMailTemplate {
 	 * init the html bodys for all known emailId , in 
 	 */
 	public static function init() {
-		// Read the selected theme from the config file
-		$theme = \OC_Util::getTheme();
+/*
+		if( count( CustomizedEmails::$HTMLEMAILS) === 0 )
+		{
+			// Read the selected theme from the config file
+			$theme = \OC_Util::getTheme();
 
-		// Priority 1: emails html template coming from the Themes
-		CustomizedEmails::scanHTMLPath(\OC::$SERVERROOT . '/themes/' . $theme . '/apps/customizedemails/html/');
+			// Priority 1: emails html template coming from the Themes
+			CustomizedEmails::scanHTMLPath(\OC::$SERVERROOT . '/themes/' . $theme . '/apps/customizedemails/html/');
 
-		// Priority 2: emails html template coming from the Apps path
-		CustomizedEmails::scanHTMLPath(\OC_App::getAppPath('customizedemails') . '/html/');
-	}
-	
+			// Priority 2: emails html template coming from the Apps path
+			CustomizedEmails::scanHTMLPath(\OC_App::getAppPath('customizedemails') . '/html/');
+		}
+*/
+	}	
+
 	/**
 	 * @param Defaults $themingDefaults
 	 * @param IURLGenerator $urlGenerator
 	 * @param IL10N $l10n
 	 * @param string $emailId
 	 * @param array $data
+	 * @throws \Exception If mail could not be sent
 	 */
 	public function __construct(Defaults $themingDefaults,
 								IURLGenerator $urlGenerator,
@@ -136,15 +159,35 @@ class CustomizedEmails implements IEMailTemplate {
 
 		if(array_key_exists($emailId,self::$HTMLEMAILS)) {
 			$this->emailContent = self::$HTMLEMAILS[$emailId];
-		}
-		else {
-			$this->delegate = new EMailTemplate(
-				$themingDefaults,
-				$urlGenerator,
-				$l10n,
-				$emailId,
-				$data
-			);	
+		} else {
+			// Read the selected theme from the config file
+			$theme = \OC_Util::getTheme();
+
+			// Priority 1: emails html template coming from the Themes
+			$this->emailContent = CustomizedEmails::getHTMLFile(\OC::$SERVERROOT . '/themes/' . $theme . '/apps/customizedemails/html/',$emailId);
+
+			// Priority 2: emails html template coming from the Apps path
+			if( $this->emailContent == null ) {
+				$this->emailContent = CustomizedEmails::getHTMLFile(\OC_App::getAppPath('customizedemails') . '/html/',$emailId);
+			}
+
+			// Priority 3: default template coming from Nextcloud
+			if( $this->emailContent == null ) {
+				$this->delegate = new EMailTemplate(
+					$themingDefaults,
+					$urlGenerator,
+					$l10n,
+					$emailId,
+					$data
+				);
+			}
+
+			// if the content of the file is empty => do not send an email
+			if( $this->emailContent == 'EMPTY' )
+				throw new \UnexpectedValueException(
+					$emailId . '.html exists but is empty so the email has been desactivated, no email sent' 
+				);
+	
 		}
 	}
 
@@ -152,7 +195,28 @@ class CustomizedEmails implements IEMailTemplate {
 		if(isset($this->delegate)) {
 			return( $this->delegate->setSubject($subject));
 		}
-		$this->subject = $subject;
+
+		// pour faciliter l integration SAGIS
+		switch($this->emailId) {
+			case "settings.Welcome":
+				$this->subject = "SAGIS : COFFRE-FORT BIENVENUE";
+			break;
+			case "core.NewPassword":
+				$this->subject = "SAGIS : COFFRE-FORT Première connexion";
+			break;
+			case "settings.PasswordChanged":
+				$this->subject = "SAGIS : COFFRE-FORT Mot de passe";
+			break;
+			case "settings.EmailChanged":
+				$this->subject = "SAGIS : COFFRE-FORT Adresse email";
+			break;
+			case "core.ResetPassword":
+				$this->subject = "SAGIS : COFFRE-FORT Mot de passe oublié ?";
+			break;
+			case "files_sharing.RecipientNotification":
+				$this->subject = vsprintf('SAGIS : COFFRE-FORT Nouveau document partagé par %1$s: »%2$s«',array($this->data['initiator'], $this->data['filename']) );
+			break;
+		}
 	}
 
 	/**
@@ -164,6 +228,8 @@ class CustomizedEmails implements IEMailTemplate {
 		if(isset($this->delegate)) {
 			return( $this->delegate->addHeader());
 		}
+		// build the URL to the logo
+		$logoUrl = $this->urlGenerator->getAbsoluteURL($this->themingDefaults->getLogo(false));
 	}
 
 	/**
@@ -262,33 +328,6 @@ class CustomizedEmails implements IEMailTemplate {
 		if(isset($this->delegate)) {
 			return( $this->delegate->addBodyButton($text, $url, $plainText));
 		}
-
-		$urlCSS = $this->urlGenerator->getAbsoluteURL("/sagis/css/idGeneratedStyles.css");
-		$urlLogoSagisNoir = $this->urlGenerator->getAbsoluteURL("/sagis/image/RVB_RES_ROUGE_SAGIS_SIGNATURE.png");
-		$urlSymbolePhy = $this->urlGenerator->getAbsoluteURL("/sagis/image/190429_SYMBOLE_PHI.png");
-		$urlLogoCoffreFort = $this->urlGenerator->getAbsoluteURL("/sagis/image/190304_COFFRE_FORT_LOGO-09.png");
-		$urlCarteVisiteSupport =  $this->urlGenerator->getAbsoluteURL("/sagis/image/181212_Carte_de_visite_Support_technique-_Interactif_jpeg5.png");
-
-		if($this->emailId === "core.NewPassword") {
-			$this->htmlBody = vsprintf($this->bodyNewPassword, [$urlCSS,$urlLogoSagisNoir,$urlSymbolePhy,$urlLogoCoffreFort,$urlCarteVisiteSupport]);
-		} else if($this->emailId === "core.ResetPassword") {
-			$this->htmlBody = vsprintf($this->bodyResetPassword, [$urlCSS,$urlLogoSagisNoir,$urlSymbolePhy,$urlLogoCoffreFort,$urlCarteVisiteSupport]);
-		}
-
-		if ($plainText === '') {
-			$plainText = $text;
-			$text = htmlspecialchars($text);
-		}
-
-
-
-		if ($plainText !== false) {
-			$this->plainBody .= $plainText . ': ';
-		}
-
-		$this->plainBody .=  $url . PHP_EOL;
-		
-
 	}
 
 
@@ -331,6 +370,28 @@ class CustomizedEmails implements IEMailTemplate {
 	public function renderHtml(): string {
 		if(isset($this->delegate)) {
 			return( $this->delegate->renderHtml());
+		}
+
+		$url = $this->urlGenerator->getAbsoluteURL("/newpassword" . (null !== $this->data['emailAddress'] ? '/' . $this->data['emailAddress'] : '') );
+		$urlLogin = $this->urlGenerator->getAbsoluteURL("/login" . (null !== $this->data['emailAddress'] ? '?user=' . $this->data['emailAddress'] : '') );
+
+		// pour faciliter l integration SAGIS
+		switch($this->emailId) {
+			case "settings.Welcome":				
+				$this->emailContent = str_replace('%link%', $url, $this->emailContent);
+			break;
+			case "core.NewPassword":
+			case "core.ResetPassword":
+				$this->emailContent = str_replace('%link%', $this->data['link'], $this->emailContent);
+			break;
+			case "settings.PasswordChanged":
+			case "settings.EmailChanged":
+				$this->emailContent = str_replace('%link%', $urlLogin, $this->emailContent);
+				$this->emailContent = str_replace('%linkReset%', $url, $this->emailContent);
+			break;
+			case "files_sharing.RecipientNotification":
+				$this->emailContent = str_replace('%link%', $this->data['link'], $this->emailContent);
+			break;
 		}
 		return $this->emailContent;
 	}
