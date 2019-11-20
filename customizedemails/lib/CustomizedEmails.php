@@ -385,9 +385,11 @@ class CustomizedEmails implements IEMailTemplate {
 				$this->emailContent = str_replace('%link%', $this->data['link'], $this->emailContent);
 			break;
 			case "settings.PasswordChanged":
-			case "settings.EmailChanged":
 				$this->emailContent = str_replace('%link%', $urlLogin, $this->emailContent);
 				$this->emailContent = str_replace('%linkReset%', $url, $this->emailContent);
+			case "settings.EmailChanged":				
+				$urlLogin = $this->urlGenerator->getAbsoluteURL("/login" . (null !== $this->data['newEMailAddress'] ? '?user=' . $this->data['newEMailAddress'] : '') );
+				$this->emailContent = str_replace('%link%', $urlLogin, $this->emailContent);
 			break;
 			case "files_sharing.RecipientNotification":
 				$this->emailContent = str_replace('%link%', $this->data['link'], $this->emailContent);
